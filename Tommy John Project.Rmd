@@ -1,0 +1,269 @@
+---
+title: "Tommy John"
+author: "Nick Hanhan"
+date: "6/20/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+
+library(dplyr)
+tj <- read.csv("tj.csv", header=T, na.strings=c(""," ","NA"))
+tj <- select(tj, -31:-42)
+```
+
+
+```{r}
+library(lubridate)
+tj$TJ.Surgery.Date <- mdy(tj$TJ.Surgery.Date)
+tj$Game <- mdy(tj$Game)
+
+tj$difference <- difftime(tj$TJ.Surgery.Date, tj$Game,units='days')
+tj$difference <- as.numeric(tj$difference)
+```
+
+```{r}
+library(ggplot2)
+ggplot(data=tj,
+       aes(x=Team,fill=Team))+
+  geom_bar()+
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ylab("Amount of Tommy John Surgeries")+
+  ggtitle("Tommy John Surgery By Team")
+tj %>% group_by(Team) %>% 
+  count()
+```
+
+```{r}
+tj_pro <- tj %>% filter(Level != "HS" & Level != "Coll")
+no_comeback <- tj_pro %>% filter(Post.TJ.MLB.IP.PA == "0") %>% filter(Year < 2020)
+#861 pitchers never threw an inning after tommy john surgery, not including pitchers who got surgery in 2019, some pitchers are working on comebacks, but with no season right now 
+
+no_comeback %>% group_by(Level) %>% count() 
+no_comeback_mlb <- no_comeback %>% filter(Level == "MLB")
+
+
+```
+
+
+```{r}
+ggplot(data=tj_pro,
+       aes(x=Team,fill=Team))+
+  geom_bar()+
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ylab("Amount of Tommy John Surgeries Since 2000")+
+  ggtitle("Tommy John Surgery By Team")
+tj_pro %>% group_by(Team) %>% 
+  count()
+```
+
+```{r}
+tj_mlb <- tj %>% filter(Level=="MLB")
+ggplot(data=tj_mlb,
+       aes(x=Team,fill=Team))+
+  geom_bar()+
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ylab("Amount of Tommy John Surgeries Since 2000")+
+  ggtitle("Tommy John Surgery By Team")
+tj_mlb %>% group_by(Team) %>% 
+  count()
+
+```
+
+```{r}
+jpeg(file="tjovertime.jpeg")
+ggplot(data=tj, 
+       aes(x=Year, colour=Year))+
+  geom_bar()
+library(dplyr)
+tj %>% group_by(Year) %>% count()
+dev.off()
+
+ggplot(data=tj_mlb, 
+       aes(x=Year, colour=Year))+
+  geom_bar()
+```
+```{r}
+ggplot(data=tj, 
+       aes(x=Month, colour=Year))+
+  geom_bar()
+
+tj %>% group_by(Month) %>% count()
+```
+
+```{r}
+tj %>% group_by(Country) %>% summarise(mean(Age))
+
+tj %>% group_by(Throws) %>% count()
+
+tj %>% group_by(Level) %>% filter(Year > 2018) %>% count() 
+```
+
+```{r}
+tj %>% group_by(Level) %>% ggplot(aes(x=Level, colour=Level))+ geom_bar()
+```
+
+```{r}
+tj %>% group_by(Country) %>% ggplot(aes(x=Country, colour=Country))+geom_bar()
+tj %>% filter(Country=="United States") %>% group_by(High.School) %>% ggplot(aes(x=High.School, colour=High.School))+geom_bar()
+
+```
+
+```{r}
+tj$Post.TJ.MLB.G <- as.numeric(tj$Post.TJ.MLB.G)
+tj$Post.TJ.MLB.IP.PA <- as.numeric(tj$Post.TJ.MLB.IP.PA)
+```
+
+
+```{r}
+comeback <- tj_pro %>% filter(Post.TJ.MLB.IP.PA >= "1") %>% filter(Year <2020)
+ggplot(data=comeback, 
+       aes(x=Team, colour=Team))+
+  geom_bar()+
+  ylab("Number of Pitchers who returned from TJ")+
+  labs("Pitchers by Team who Returned")
+
+  
+```
+
+```{r}
+tj %>% group_by(Age) %>% count()
+tj_mlb %>% group_by(Age) %>% count()
+
+mean(tj$Age)
+ggplot(data=tj, 
+       aes(x=Age, colour=Age))+
+  geom_bar()+
+  ylab("Number of Players who got Tommy John")+
+  labs("Players Age at Surgery")+
+  scale_x_continuous(breaks=c(10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50))+
+  geom_vline(aes(xintercept=mean(Age)),
+            color="red", linetype="dashed", size=1)
+```
+
+```{r}
+
+max(tj$difference, na.rm=TRUE)/30
+min(tj$difference, na.rm=TRUE)/30
+mean(tj$difference, na.rm = TRUE)/30
+
+mean(tj_mlb$difference, na.rm=TRUE)/30
+mean(tj_pro$difference, na.rm=TRUE)/30
+
+```
+
+```{r}
+tj %>% group_by(Surgeon.s.) %>% count() %>% arrange(desc(n))
+```
+
+```{r}
+table(tj$Team, tj$Month)
+prop.table(table(tj$Team, tj$Month), margin =2)
+type_tab <- prop.table(table(tj$Team, tj$Month), margin =2)
+type_tab
+
+tj %>% group_by(Month) %>% count()
+
+table(tj_pro$Team, tj_pro$Level)
+prop.table(table(tj_pro$Team, tj_pro$Level), margin =2)
+type_tab2 <- prop.table(table(tj_pro$Team, tj_pro$Level), margin =2)
+type_tab2
+
+
+```
+
+
+```{r}
+tj %>% group_by(Setback.Type) %>% count() %>% arrange(desc(n))
+tj %>% group_by(Setback.Type.1) %>% count() %>% arrange(desc(n))
+
+tj_mlb %>% group_by(Setback.Type) %>% count() %>% arrange(desc(n))
+```
+```{r}
+tj_pro %>% summarise(mean(Age))
+tj_mlb %>% summarise(mean(Age))
+tj_mlb %>% summarise(mean(difference, na.rm=TRUE))
+```
+
+```{r}
+no_comeback_mlb <- no_comeback_mlb %>% filter(Year <2019)
+no_comeback1 <- no_comeback_mlb %>% filter(Recovery.Time..months. != "NA")
+tj_mlb %>% filter(Year < 1990) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year >1990 & Year <1995) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year > 1995 & Year <2000) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year > 2000 & Year <2005) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year > 2005 & Year <2010) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year > 2010 & Year <2015) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+tj_mlb %>% filter(Year >2015 & Year <2020) %>% summarise(mean(Recovery.Time..months., na.rm=TRUE))
+```
+
+
+
+```{r}
+mean(tj_mlb$Recovery.Time..months., na.rm=TRUE)
+tj_mlb_1 <- tj_mlb %>% filter(Recovery.Time..months. < 24)
+ggplot(tj_mlb %>% group_by(Year, Recovery.Time..months.) %>% 
+         summarise(Recovery.Time..months.=mean(Recovery.Time..months.)), 
+       aes(x = Year, y = Recovery.Time..months.)) + 
+  geom_point(data=tj_mlb, aes(color=Year, group=Recovery.Time..months.), size=1) + 
+  stat_summary(fun.y=median, aes(group=1), geom="line", colour="red") +
+  stat_summary(fun.y=median, aes(group=1), geom="point", colour="blue", size=3, shape=4)+
+  ylab("Recovery Time from Tommy John (Months)")+
+  scale_y_continuous(breaks=c(10,15,20,25,30,35,40,45,50))
+
+
+ggplot(tj_mlb_1 %>% group_by(Year, Recovery.Time..months.) %>% 
+         summarise(Recovery.Time..months.=mean(Recovery.Time..months.)), 
+       aes(x = Year, y = Recovery.Time..months.)) + 
+  geom_point(data=tj_mlb_1, aes(color=Year, group=Recovery.Time..months.), size=1) + 
+  stat_summary(fun.y=mean, aes(group=1), geom="line", colour="red") +
+  stat_summary(fun.y=mean, aes(group=1), geom="point", colour="blue", size=3, shape=4)+
+  ylab("Recovery Time from Tommy John (Months)")+
+  scale_y_continuous(breaks=c(10,15,20,25))
+```
+
+```{r}
+tj_ready <- mutate(tj, return=ifelse(Return.Date..same.level. != "NA", "Yes", "No"))
+tj <- mutate(tj, newvar= ifelse(Post.TJ.MLB.IP.PA >0, "Yes", "No"))
+```
+
+
+```{r}
+library(data.table)
+agebreaks <- c(10,15,20,25,30,35,40,45,50)
+agelabels <- c("10-14","15-19","20-24","25-29","30-34",
+               "35-39","40-44","45-49")
+
+setDT(tj)[ , agegroups := cut(Age, 
+                                breaks = agebreaks, 
+                                right = FALSE, 
+                                labels = agelabels)]
+
+tj_ready <- tj %>% filter(Year <= 2018)
+tj_ready$return <- as.character(tj_ready$return)
+tj_ready$return[is.na(tj_ready$return)] <- "No"
+
+tj_ready %>% group_by(agegroups) %>% count(return)
+
+tj_percent <- tj_ready %>% select(return, agegroups)
+tj_percent$agegroups <- as.numeric(tj_percent$agegroups)
+
+library(formattable)
+tab_type <- table(tj_ready$agegroups, tj_ready$return)
+type_tab_percent <- prop.table(table(tj_ready$agegroups, tj_ready$return),1)
+formattable(type_tab_percent,align = c("l", rep("r", NCOL(type_tab_percent) - 1)))
+
+
+library(expss)
+cro_cpct(tj_ready$return, list(total(), tj_ready$agegroups)) %>% set_caption("Return percentages by each age group from Tommy John")
+
+
+```
+
+```{r}
+```
